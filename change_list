@@ -1,0 +1,78 @@
+# Modification on UTFT.cpp:
+
+I added these changes.
+
+After the heading comments is added these lines
+
+//******************************************************************************************
+// WLL
+// On some displays, the color is inverted, ie. white is black and black is white, etc.
+// To correct the color, define invCol to 0xffff, otherwise set invCol to 0 as the default
+// Invert color changes has been tagged with my initals WLL
+#define invCol 0xffff
+//#define invCol 0
+//******************************************************************************************
+
+I then modified these lines
+
+In void UTFT::clrScr()
+// WLL
+      _fast_fill_16(invCol,invCol,((disp_x_size+1)*(disp_y_size+1)));
+
+In void UTFT::fillScr(word color)
+// WLL
+   ch=byte(color>>8 )^invCol;
+   cl=byte(color & 0xFF)^invCol;
+
+Then grouped together is
+void UTFT::setColor(byte r, byte g, byte b)
+{
+// WLL
+   fch=((r&248)|g>>5)^invCol;
+   fcl=((g&28)<<3|b>>3)^invCol;
+}
+
+void UTFT::setColor(word color)
+{
+// WLL
+   fch=byte(color>>8 )^invCol;
+   fcl=byte(color & 0xFF)^invCol;
+}
+
+word UTFT::getColor()
+{
+// WLL
+   return ((fch<<8 ) | fcl)^invCol;
+}
+
+void UTFT::setBackColor(byte r, byte g, byte b)
+{
+// WLL
+   bch=((r&248)|g>>5)^invCol;
+   bcl=((g&28)<<3|b>>3)^invCol;
+   _transparent=false;
+}
+
+void UTFT::setBackColor(uint32_t color)
+{
+   if (color==VGA_TRANSPARENT)
+      _transparent=true;
+   else
+   {
+// WLL
+      bch=byte(color>>8 )^invCol;
+      bcl=byte(color & 0xFF)^invCol;
+      _transparent=false;
+   }
+}
+
+word UTFT::getBackColor()
+{
+// WLL
+   return ((bch<<8 ) | bcl)^invCol;
+}
+
+
+Then in void UTFT::drawBitmap - there are two methods - I modified all LCD_Write_DATA calls like this
+// WLL
+            LCD_Write_DATA((col>>8 )^invCol,(col & 0xff)^invCol);
